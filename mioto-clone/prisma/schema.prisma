@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  phone     String?
+  bookings  Booking[]
+  cars      Car[]     @relation("UserCars")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Car {
+  id           String      @id @default(cuid())
+  title        String
+  brand        String
+  model        String
+  year         Int
+  city         String
+  pricePerDay  Int
+  rating       Float?      @default(4.8)
+  tripsCount   Int         @default(0)
+  seats        Int
+  transmission String      // "AT" | "MT"
+  fuel         String      // "Gasoline" | "Diesel" | "EV"
+  description  String
+  features     Json?
+
+  ownerId  String?
+  owner    User?       @relation("UserCars", fields: [ownerId], references: [id])
+
+  images    CarImage[]
+  bookings  Booking[]
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([city])
+  @@index([pricePerDay])
+}
+
+model CarImage {
+  id     String @id @default(cuid())
+  url    String
+  order  Int    @default(0)
+
+  carId  String
+  car    Car    @relation(fields: [carId], references: [id], onDelete: Cascade)
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model Booking {
+  id        String         @id @default(cuid())
+  carId     String
+  car       Car            @relation(fields: [carId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?          @relation(fields: [userId], references: [id])
+
+  guestName  String?
+  guestEmail String?
+
+  startAt   DateTime
+  endAt     DateTime
+  totalPrice Int
+  status    BookingStatus  @default(CONFIRMED)
+
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([carId])
+  @@index([startAt])
+  @@index([endAt])
+}
