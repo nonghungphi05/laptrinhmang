@@ -334,3 +334,20 @@ async function submitAuth(payload, mode, elements, http, store, onSuccess) {
     button.innerHTML = '<span>Tiếp tục</span>';
   }
 }
+
+async function initMotionAnimations(root) {
+  try {
+    if (!window.Motion) {
+      await import('https://cdn.jsdelivr.net/npm/motion@10.16.4/dist/motion.min.js');
+    }
+    const { animate, stagger } = window.Motion;
+    const targets = root.querySelectorAll('[data-motion="fade-up"]');
+    animate(
+      targets,
+      { opacity: [0, 1], transform: ['translateY(24px)', 'translateY(0px)'] },
+      { duration: 0.7, delay: stagger(0.08), easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
+    );
+  } catch (err) {
+    console.warn('Không thể tải Motion animations', err);
+  }
+}
