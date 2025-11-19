@@ -83,7 +83,7 @@ export class ChatPanel {
           }
         });
       }
-///////////////
+
   mount(container) {
     container.innerHTML = '';
     container.appendChild(this.root);
@@ -124,5 +124,82 @@ export class ChatPanel {
       this.cursors[roomId] = older[0].createdAt;
       this.store.prependMessages(roomId, older);
     }
+  }
+    render(state) {
+    if (state.view !== 'chat') {
+      this.root.style.display = 'none';
+      return;
+    }
+    this.root.style.display = 'flex';
+    
+    const room = state.rooms.find((r) => r.id === state.currentRoomId);
+    const avatarEl = this.chatAvatar;
+    const baseAvatarClass = 'chat-header-avatar sidebar-avatar';
+    if (room) {
+      // Get friend info for direct chat
+      let friendName = room.name;
+      let friendAvatar = null;
+      let initial = room.name.charAt(0).toUpperCase();
+      
+      if (!room.is_group && room.members) {
+        const memberIds = room.members.split(',');
+        const friendId = memberIds.find(id => id !== state.user?.id);
+        const friend = state.friends?.find(f => f.id === friendId);
+        if (friend) {
+          // Use friend's name instead of room name
+          friendName = friend.display_name || friend.displayName || friend.phone;
+          initial = friendName.charAt(0).toUpperCase();
+          friendAvatar = friend.avatar_url || friend.avatarUrl;
+        }
+      }
+      
+      // Update header with room/friend info
+      this.chatName.textContent = friendName;
+      
+      avatarEl.className = baseAvatarClass;
+      // Update avatar
+      if (friendAvatar) {
+        avatarEl.innerHTML = `<img src="${friendAvatar}" alt="${this.escape(friendName)}" />`;
+      } else {
+        avatarEl.textContent = initial;
+      }
+      avatarEl.classList.remove('online', 'offline', 'group');
+      
+      if (room.is_group) {
+        avatarEl.classList.add('group');
+        const members = room.members ? room.members.split(',').length : 0;
+        this.chatStatus.textContent = `${members} thành viên`;
+      } else {
+        // For direct chat, show real online status
+        const memberIds = room.members.split(',');
+        const friendId = memberIds.find(id => id !== state.user?.id);
+        const isOnline = this.store.isUserOnline(friendId);
+        if (friendId) {
+          avatarEl.classList.add(isOnline ? 'online' : 'offline');
+        }
+        this.chatStatus.textContent = isOnline ? 'Đang hoạt động' : 'Ngoại tuyến';
+      }
+    } else {
+      // No room selected
+      this.chatName.textContent = 'Chọn một cuộc trò chuyện';
+      this.chatStatus.textContent = 'Chọn từ danh sách bên trái';
+      avatarEl.className = baseAvatarClass;
+      avatarEl.textContent = '💬';
+    }
+    
+    // Get messages and ensure they're sorted by timestamp
+    let messages = state.messages[state.currentRoomId] || [];
+    
+    // Sort messages by timestamp to ensure correct order
+    messages = messages.sort((a, b) => {
+      const timeA = new Date(a.createdAt || a.created_at).getTime();
+      const timeB = new Date(b.createdAt || b.created_at).getTime();
+      return timeA - timeB;
+    });
+    
+    this.renderMessages(messages, state.user?.id);
+    
+    const typers = state.typing[state.currentRoomId] || [];
+    this.typingEl.style.display = typers.length ? 'flex' : 'none';
   }
 }
