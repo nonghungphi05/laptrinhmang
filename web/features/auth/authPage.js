@@ -276,3 +276,61 @@ function validatePayload(payload, mode) {
   }
   return errors;
 }
+
+function clearErrors({ errors, phoneInput, passwordInput, displayInput }) {
+  Object.values(errors).forEach((node) => {
+    if (node) node.textContent = '';
+  });
+  [phoneInput, passwordInput, displayInput].forEach((input) => {
+    if (input) input.setAttribute('aria-invalid', 'false');
+  });
+}
+
+function renderErrors(errMap, elements) {
+  Object.entries(errMap).forEach(([key, message]) => {
+    if (elements.errors[key]) {
+      elements.errors[key].textContent = message;
+    } else if (key === 'global') {
+      elements.errors.global.textContent = message;
+    }
+    const input = getInputByKey(key, elements);
+    if (input) {
+      input.setAttribute('aria-invalid', 'true');
+    }
+  });
+}
+
+function getInputByKey(key, elements) {
+  switch (key) {
+    case 'phone':
+      return elements.phoneInput;
+    case 'password':
+      return elements.passwordInput;
+    case 'displayName':
+      return elements.displayInput;
+    default:
+      return null;
+  }
+}
+
+async function submitAuth(payload, mode, elements, http, store, onSuccess) {
+  const button = elements.submitBtn;
+  button.classList.add('is-loading');
+  button.innerHTML = '<span>Đang xử lý</span><span class="spinner" aria-hidden="true"></span>';
+  try {
+    const body = mode === 'register'
+      ? { phone: payload.phone, password: payload.password, displayName: payload.displayName }
+      : { phone: payload.phone, password: payload.password };
+    const response = await http.post(`/auth/${mode === 'login' ? 'login' : 'register'}`, body);
+    localStorage.setItem('messzola_token', response.accessToken);
+    http.setToken(response.accessToken);
+    store.setToken(response.accessToken);
+    store.setUser(response.user);
+    onSuccess(response.user);
+  } catch (err) {
+    renderErrors({ global: err.message || 'Có lỗi xảy ra, thử lại sau.' }, elements);
+  } finally {
+    button.classList.remove('is-loading');
+    button.innerHTML = '<span>Tiếp tục</span>';
+  }
+}
