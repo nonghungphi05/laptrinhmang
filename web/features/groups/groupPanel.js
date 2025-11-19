@@ -153,3 +153,64 @@ export class GroupPanel {
     });
   }
 }
+export class GroupPanel {
+  renderGroupsList(state) {
+    // ... (phần render HTML như trên)
+    
+    // Add click handlers for leave buttons
+    this.groupsList.querySelectorAll('[data-leave-group]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const groupId = btn.dataset.leaveGroup;
+        const groupName = btn.closest('.group-card').querySelector('strong').textContent;
+        
+        if (confirm(`Bạn có chắc chắn muốn rời khỏi nhóm "${groupName}"?`)) {
+          try {
+            console.log('Leaving group:', groupId);
+            const result = await this.http.delete(`/rooms/${groupId}/leave`);
+            console.log('Leave result:', result);
+            await this.reloadRooms();
+          } catch (err) {
+            console.error('Leave group error:', err);
+            alert(err.message || 'Không thể rời nhóm');
+          }
+        }
+      });
+    });
+
+    this.groupsList.querySelectorAll('[data-disband-group]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const groupId = btn.dataset.disbandGroup;
+        const groupName = btn.closest('.group-card').querySelector('strong').textContent;
+        if (!confirm(`Giải tán nhóm "${groupName}"? Hành động này không thể hoàn tác.`)) {
+          return;
+        }
+        const originalLabel = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = '...';
+        try {
+          await this.http.delete(`/rooms/${groupId}`);
+          await this.reloadRooms();
+        } catch (err) {
+          console.error('Disband group error:', err);
+          alert(err.message || 'Không thể giải tán nhóm');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = originalLabel;
+        }
+      });
+    });
+
+    this.groupsList.querySelectorAll('[data-invite-group]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const groupId = btn.dataset.inviteGroup;
+        const group = groups.find((g) => g.id === groupId);
+        if (group) {
+          this.openInviteDialog(group);
+        }
+      });
+    });
+  }
+}
