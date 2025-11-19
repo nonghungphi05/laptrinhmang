@@ -67,3 +67,24 @@ export class ProfilePanel {
     });
   }
 }
+export class ProfilePanel {
+  bindEvents() {
+    // ... phần avatar upload ở trên ...
+    
+    this.profileForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(this.profileForm);
+      try {
+        const payload = {
+          displayName: formData.get('displayName'),
+          bio: formData.get('bio')
+        };
+        const profile = await this.http.patch('/users/me', payload);
+        this.store.setUser(profile);
+        this.messageEl.textContent = 'Đã cập nhật hồ sơ';
+      } catch (err) {
+        this.messageEl.textContent = err.message;
+      }
+    });
+  }
+}
