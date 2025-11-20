@@ -432,4 +432,91 @@ export class AppShell {
       </div>
     `;
   }
+
+  filterSidebar(query) {
+    const items = this.sidebarContent.querySelectorAll(
+      ".sidebar-item, .sidebar-menu-item"
+    );
+    const lowerQuery = query.toLowerCase();
+
+    items.forEach((item) => {
+      const text = item.textContent.toLowerCase();
+      item.style.display = text.includes(lowerQuery) ? "flex" : "none";
+    });
+  }
+
+  destroy() {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+    }
+  }
+
+  getTemplate() {
+    return `
+      <div class="app-shell">
+        <!-- Header -->
+        <header class="app-main-header">
+          <div class="header-left">
+            <img src="./assets/logo.png" alt="MessZola Logo" width="40" height="40" loading="lazy" />
+            <img src="./assets/logo1.png" alt="MessZola Logo" width="130" height="30" loading="lazy" />
+          </div>
+          <nav class="header-nav">
+            <button data-view="chat" class="nav-btn active">
+              <span class="nav-icon">💬</span>
+              <span class="nav-text">Trò chuyện</span>
+            </button>
+            <button data-view="friends" class="nav-btn">
+              <span class="nav-icon">👥</span>
+              <span class="nav-text">Bạn bè</span>
+            </button>
+            <button data-view="groups" class="nav-btn">
+              <span class="nav-icon">👨‍👩‍👧‍👦</span>
+              <span class="nav-text">Nhóm</span>
+            </button>
+          </nav>
+          <div class="header-right">
+            <div class="user-menu">
+              <button class="user-avatar-btn" data-toggle-menu>
+                <div class="user-avatar" data-user-avatar>👤</div>
+              </button>
+              <div class="user-dropdown" data-user-dropdown>
+                <button data-view="profile">
+                  <span>👤</span> Trang cá nhân
+                </button>
+                <button data-view="settings">
+                  <span>⚙️</span> Cài đặt
+                </button>
+                <div class="dropdown-divider"></div>
+                <button data-action="logout" class="danger">
+                  <span>🚪</span> Đăng xuất
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <div class="sidebar-header-title" data-sidebar-title>
+            <h3>Bạn bè</h3>
+          </div>
+          <div class="sidebar-search">
+            <input type="text" placeholder="Tìm kiếm..." data-search-input />
+          </div>
+          <div class="sidebar-content" data-sidebar-content>
+            <!-- Danh sách bạn bè sẽ được render ở đây -->
+          </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+          <div data-slot="chat"></div>
+          <div data-slot="friends" style="display:none;"></div>
+          <div data-slot="groups" style="display:none;"></div>
+          <div data-slot="profile" style="display:none;"></div>
+          <div data-slot="settings" style="display:none;"></div>
+        </main>
+      </div>
+    `;
+  }
 }
