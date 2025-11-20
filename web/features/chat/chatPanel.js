@@ -202,4 +202,56 @@ export class ChatPanel {
     const typers = state.typing[state.currentRoomId] || [];
     this.typingEl.style.display = typers.length ? 'flex' : 'none';
   }
+  renderMessages(messages, userId) {
+    if (!messages.length) {
+      this.messageList.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">💬</div>
+          <h3>Chưa có tin nhắn</h3>
+          <p>Bắt đầu cuộc trò chuyện bằng cách gửi tin nhắn đầu tiên</p>
+        </div>
+      `;
+      return;
+    }
+    
+    console.log('Rendering messages:', messages.length, messages);
+    
+    const maxRender = 200;
+    const slice = messages.length > maxRender ? messages.slice(messages.length - maxRender) : messages;
+    
+    // Group messages by sender, but call-history messages are standalone
+    const grouped = [];
+    let currentGroup = null;
+    
+    slice.forEach((msg) => {
+      // Call history messages are standalone (not grouped)
+      if (msg.type === 'call-history') {
+        grouped.push({
+          senderId: msg.senderId || msg.sender_id,
+          senderName: msg.senderName || 'User',
+          messages: [msg],
+          isCallHistory: true
+        });
+        currentGroup = null; // Reset current group
+      } else {
+        const msgSenderId = msg.senderId || msg.sender_id;
+        if (!currentGroup || currentGroup.senderId !== msgSenderId) {
+          currentGroup = {
+            senderId: msgSenderId,
+            senderName: msg.senderName || 'User',
+            messages: [],
+            isCallHistory: false
+          };
+          grouped.push(currentGroup);
+        }
+        currentGroup.messages.push(msg);
+      }
+    });
+    
+    this.messageList.innerHTML = grouped
+      .map((group) => this.renderMessageGroup(group, userId))
+      .join('');
+    this.scrollToBottom();
+  }
+  
 }
