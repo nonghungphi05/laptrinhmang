@@ -26,3 +26,25 @@ export class HttpClient {
     }
     return response.json();
   }
+get(path) {
+    return this.request(path, { method: 'GET' });
+  }
+
+  post(path, body) {
+    const options = { method: 'POST' };
+    if (body instanceof FormData) {
+      options.body = body;
+    } else {
+      options.body = JSON.stringify(body);
+    }
+    return this.request(path, options);
+  }
+
+  patch(path, body) {
+    return this.request(path, { method: 'PATCH', body: JSON.stringify(body) });
+  }
+
+  delete(path) {
+    return this.request(path, { method: 'DELETE' });
+  }
+}
